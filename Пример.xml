@@ -1,0 +1,624 @@
+﻿<?xml version="1.0" encoding="utf-16"?>
+<EasyQuestProfile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <QuestsSorted>
+    <QuestsSorted Action="PickUp" NameClass="TheBalanceofNature456" />
+    <QuestsSorted Action="Pulse" NameClass="TheBalanceofNature456" />
+    <QuestsSorted Action="TurnIn" NameClass="TheBalanceofNature456" />
+    <QuestsSorted Action="PickUp" NameClass="TheBalanceofNature457" />
+    <QuestsSorted Action="Pulse" NameClass="TheBalanceofNature457" />
+    <QuestsSorted Action="TurnIn" NameClass="TheBalanceofNature457" />
+    <QuestsSorted Action="PickUp" NameClass="TheWoodlandProtector458" />
+    <QuestsSorted Action="TurnIn" NameClass="TheWoodlandProtector458" />
+    <QuestsSorted Action="PickUp" NameClass="TheWoodlandProtector459" />
+    <QuestsSorted Action="Pulse" NameClass="TheWoodlandProtector459" />
+    <QuestsSorted Action="TurnIn" NameClass="TheWoodlandProtector459" />
+    <QuestsSorted Action="PickUp" NameClass="WebwoodVenom916" />
+    <QuestsSorted Action="Pulse" NameClass="WebwoodVenom916" />
+    <QuestsSorted Action="TurnIn" NameClass="WebwoodVenom916" />
+  </QuestsSorted>
+  <NpcQuest>
+    <NPCQuest Id="2079" Name="Conservator Ilthalaine" GameObject="false">
+      <PickUpQuests>
+        <int>456</int>
+        <int>457</int>
+      </PickUpQuests>
+      <TurnInQuests>
+        <int>456</int>
+        <int>457</int>
+      </TurnInQuests>
+      <Position X="10328.9" Y="826.052" Z="1326.46" />
+    </NPCQuest>
+    <NPCQuest Id="2077" Name="Melithar Staghelm" GameObject="false">
+      <PickUpQuests>
+        <int>458</int>
+      </PickUpQuests>
+      <TurnInQuests />
+      <Position X="10389.8" Y="763.477" Z="1320.33" />
+    </NPCQuest>
+    <NPCQuest Id="1992" Name="Tarindrella" GameObject="false">
+      <PickUpQuests>
+        <int>459</int>
+      </PickUpQuests>
+      <TurnInQuests>
+        <int>458</int>
+        <int>459</int>
+      </TurnInQuests>
+      <Position X="10296.9" Y="870.227" Z="1335.91" />
+    </NPCQuest>
+    <NPCQuest Id="2082" Name="Gilshalan Windwalker" GameObject="false">
+      <PickUpQuests>
+        <int>916</int>
+      </PickUpQuests>
+      <TurnInQuests>
+        <int>916</int>
+      </TurnInQuests>
+      <Position X="10417.7" Y="871.194" Z="1319.49" />
+    </NPCQuest>
+  </NpcQuest>
+  <Npc>
+    <Npc>
+      <Position X="10436.7" Y="794.837" Z="1322.701" Type="Flying" />
+      <Entry>3589</Entry>
+      <Name>Кейна</Name>
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>Repair</Type>
+      <ContinentId>Kalimdor</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10450.2" Y="779.858" Z="1322.67" Type="Flying" />
+      <Entry>6091</Entry>
+      <Name>Деллия</Name>
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>Vendor</Type>
+      <ContinentId>Kalimdor</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10519.1" Y="778.014" Z="1329.6" />
+      <Entry>3594</Entry>
+      <Name>Фрагун Шепот Тени</Name>
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>RogueTrainer</Type>
+      <ContinentId>Kalimdor</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10526.6" Y="778.086" Z="1329.599" />
+      <Entry>3593</Entry>
+      <Name>Алайссия</Name>
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>WarriorTrainer</Type>
+      <ContinentId>Kalimdor</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10313.3" Y="827.044" Z="1326.48" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10355.9" Y="847.41" Z="1325.31" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10342.2" Y="836.357" Z="1326.07" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10384.6" Y="872.375" Z="1324.07" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10315.7" Y="852.533" Z="1331.31" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10396.1" Y="879.66" Z="1322.08" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10388.3" Y="874.923" Z="1323.37" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10345.8" Y="866.887" Z="1327.34" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10336.4" Y="867.745" Z="1328.55" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10327.5" Y="865.276" Z="1329.94" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10317" Y="856.41" Z="1331.24" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10331.9" Y="866.841" Z="1329.01" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10392" Y="877.285" Z="1323.01" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10323.3" Y="862.708" Z="1331.17" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10341.4" Y="867.568" Z="1327.71" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10350.1" Y="865.876" Z="1326.36" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10319.9" Y="859.775" Z="1331.19" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10409.5" Y="881.895" Z="1320" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10442.9" Y="783.989" Z="1337.37" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10485" Y="824.842" Z="1322.83" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10436.7" Y="794.837" Z="1322.79" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10438.1" Y="787.295" Z="1337.37" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10485.9" Y="811.184" Z="1322.83" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10479.2" Y="826.638" Z="1322.83" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10450.2" Y="779.858" Z="1322.75" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10526.6" Y="778.086" Z="1329.68" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10519.1" Y="778.014" Z="1329.68" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10458.8" Y="801.623" Z="1346.84" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10458.5" Y="827.868" Z="1381.02" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="10464" Y="829.538" Z="1381.02" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>None</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="0" Y="0" Z="0" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>Kalimdor</ContinentId>
+    </Npc>
+    <Npc>
+      <Position X="0" Y="0" Z="0" />
+      <Entry>0</Entry>
+      <Name />
+      <GossipOption>-1</GossipOption>
+      <Active>true</Active>
+      <Faction>Neutral</Faction>
+      <Type>None</Type>
+      <ContinentId>Kalimdor</ContinentId>
+    </Npc>
+  </Npc>
+  <Blackspots />
+  <BlackGuids />
+  <EasyQuests>
+    <EasyQuest>
+      <Name>TheBalanceofNature456</Name>
+      <QuestId>
+        <int>456</int>
+      </QuestId>
+      <QuestType>KillAndLoot</QuestType>
+      <QuestClass xsi:type="KillAndLootEasyQuestClass">
+        <HotSpots>
+          <Vector3 X="10353.37" Y="758.2994" Z="1330.849" />
+        </HotSpots>
+        <EntryTarget>
+          <int>1984</int>
+          <int>2031</int>
+        </EntryTarget>
+        <IsGrinderNotQuest>false</IsGrinderNotQuest>
+      </QuestClass>
+      <ObjectiveCount1>7</ObjectiveCount1>
+      <ObjectiveCount2>4</ObjectiveCount2>
+      <ObjectiveCount3>0</ObjectiveCount3>
+      <ObjectiveCount4>0</ObjectiveCount4>
+      <ObjectiveCount5>0</ObjectiveCount5>
+      <AutoDetectObjectiveCount1>true</AutoDetectObjectiveCount1>
+      <AutoDetectObjectiveCount2>true</AutoDetectObjectiveCount2>
+      <AutoDetectObjectiveCount3>false</AutoDetectObjectiveCount3>
+      <AutoDetectObjectiveCount4>false</AutoDetectObjectiveCount4>
+      <AutoDetectObjectiveCount5>false</AutoDetectObjectiveCount5>
+      <CanCondition />
+      <IsCompleteCondition />
+      <RepeatableQuest>false</RepeatableQuest>
+      <NotRequiredInQuestLog>false</NotRequiredInQuestLog>
+      <PickUpQuestOnItem>false</PickUpQuestOnItem>
+      <PickUpQuestOnItemID>0</PickUpQuestOnItemID>
+      <Comment />
+      <GossipOptionRewardItem>1</GossipOptionRewardItem>
+      <RequiredQuest>0</RequiredQuest>
+      <MaxLevel>100</MaxLevel>
+      <MinLevel>0</MinLevel>
+      <WoWClass>None</WoWClass>
+    </EasyQuest>
+    <EasyQuest>
+      <Name>TheBalanceofNature457</Name>
+      <QuestId>
+        <int>457</int>
+      </QuestId>
+      <QuestType>KillAndLoot</QuestType>
+      <QuestClass xsi:type="KillAndLootEasyQuestClass">
+        <HotSpots>
+          <Vector3 X="10592.21" Y="738.8802" Z="1323.398" />
+        </HotSpots>
+        <EntryTarget>
+          <int>2032</int>
+          <int>1985</int>
+        </EntryTarget>
+        <IsGrinderNotQuest>false</IsGrinderNotQuest>
+      </QuestClass>
+      <ObjectiveCount1>7</ObjectiveCount1>
+      <ObjectiveCount2>7</ObjectiveCount2>
+      <ObjectiveCount3>0</ObjectiveCount3>
+      <ObjectiveCount4>0</ObjectiveCount4>
+      <ObjectiveCount5>0</ObjectiveCount5>
+      <AutoDetectObjectiveCount1>true</AutoDetectObjectiveCount1>
+      <AutoDetectObjectiveCount2>true</AutoDetectObjectiveCount2>
+      <AutoDetectObjectiveCount3>false</AutoDetectObjectiveCount3>
+      <AutoDetectObjectiveCount4>false</AutoDetectObjectiveCount4>
+      <AutoDetectObjectiveCount5>false</AutoDetectObjectiveCount5>
+      <CanCondition />
+      <IsCompleteCondition />
+      <RepeatableQuest>false</RepeatableQuest>
+      <NotRequiredInQuestLog>false</NotRequiredInQuestLog>
+      <PickUpQuestOnItem>false</PickUpQuestOnItem>
+      <PickUpQuestOnItemID>0</PickUpQuestOnItemID>
+      <Comment />
+      <GossipOptionRewardItem>1</GossipOptionRewardItem>
+      <RequiredQuest>0</RequiredQuest>
+      <MaxLevel>100</MaxLevel>
+      <MinLevel>0</MinLevel>
+      <WoWClass>None</WoWClass>
+    </EasyQuest>
+    <EasyQuest>
+      <Name>TheWoodlandProtector458</Name>
+      <QuestId>
+        <int>458</int>
+      </QuestId>
+      <QuestType>None</QuestType>
+      <QuestClass xsi:type="KillAndLootEasyQuestClass">
+        <HotSpots />
+        <EntryTarget />
+        <IsGrinderNotQuest>false</IsGrinderNotQuest>
+      </QuestClass>
+      <ObjectiveCount1>0</ObjectiveCount1>
+      <ObjectiveCount2>0</ObjectiveCount2>
+      <ObjectiveCount3>0</ObjectiveCount3>
+      <ObjectiveCount4>0</ObjectiveCount4>
+      <ObjectiveCount5>0</ObjectiveCount5>
+      <AutoDetectObjectiveCount1>false</AutoDetectObjectiveCount1>
+      <AutoDetectObjectiveCount2>false</AutoDetectObjectiveCount2>
+      <AutoDetectObjectiveCount3>false</AutoDetectObjectiveCount3>
+      <AutoDetectObjectiveCount4>false</AutoDetectObjectiveCount4>
+      <AutoDetectObjectiveCount5>false</AutoDetectObjectiveCount5>
+      <CanCondition />
+      <IsCompleteCondition />
+      <RepeatableQuest>false</RepeatableQuest>
+      <NotRequiredInQuestLog>false</NotRequiredInQuestLog>
+      <PickUpQuestOnItem>false</PickUpQuestOnItem>
+      <PickUpQuestOnItemID>0</PickUpQuestOnItemID>
+      <Comment />
+      <GossipOptionRewardItem>1</GossipOptionRewardItem>
+      <RequiredQuest>0</RequiredQuest>
+      <MaxLevel>100</MaxLevel>
+      <MinLevel>0</MinLevel>
+      <WoWClass>None</WoWClass>
+    </EasyQuest>
+    <EasyQuest>
+      <Name>TheWoodlandProtector459</Name>
+      <QuestId>
+        <int>459</int>
+      </QuestId>
+      <QuestType>KillAndLoot</QuestType>
+      <QuestClass xsi:type="KillAndLootEasyQuestClass">
+        <HotSpots>
+          <Vector3 X="10306.82" Y="998.7747" Z="1340.125" />
+          <Vector3 X="10498.96" Y="1036.267" Z="1323.977" />
+        </HotSpots>
+        <EntryTarget>
+          <int>1988</int>
+          <int>1989</int>
+        </EntryTarget>
+        <IsGrinderNotQuest>false</IsGrinderNotQuest>
+      </QuestClass>
+      <ObjectiveCount1>8</ObjectiveCount1>
+      <ObjectiveCount2>0</ObjectiveCount2>
+      <ObjectiveCount3>0</ObjectiveCount3>
+      <ObjectiveCount4>0</ObjectiveCount4>
+      <ObjectiveCount5>0</ObjectiveCount5>
+      <AutoDetectObjectiveCount1>true</AutoDetectObjectiveCount1>
+      <AutoDetectObjectiveCount2>false</AutoDetectObjectiveCount2>
+      <AutoDetectObjectiveCount3>false</AutoDetectObjectiveCount3>
+      <AutoDetectObjectiveCount4>false</AutoDetectObjectiveCount4>
+      <AutoDetectObjectiveCount5>false</AutoDetectObjectiveCount5>
+      <CanCondition />
+      <IsCompleteCondition />
+      <RepeatableQuest>false</RepeatableQuest>
+      <NotRequiredInQuestLog>false</NotRequiredInQuestLog>
+      <PickUpQuestOnItem>false</PickUpQuestOnItem>
+      <PickUpQuestOnItemID>0</PickUpQuestOnItemID>
+      <Comment />
+      <GossipOptionRewardItem>1</GossipOptionRewardItem>
+      <RequiredQuest>0</RequiredQuest>
+      <MaxLevel>100</MaxLevel>
+      <MinLevel>0</MinLevel>
+      <WoWClass>None</WoWClass>
+    </EasyQuest>
+    <EasyQuest>
+      <Name>WebwoodVenom916</Name>
+      <QuestId>
+        <int>916</int>
+      </QuestId>
+      <QuestType>KillAndLoot</QuestType>
+      <QuestClass xsi:type="KillAndLootEasyQuestClass">
+        <HotSpots>
+          <Vector3 X="10853.35" Y="915.6906" Z="1332.08" />
+        </HotSpots>
+        <EntryTarget>
+          <int>1986</int>
+        </EntryTarget>
+        <IsGrinderNotQuest>false</IsGrinderNotQuest>
+      </QuestClass>
+      <ObjectiveCount1>10</ObjectiveCount1>
+      <ObjectiveCount2>0</ObjectiveCount2>
+      <ObjectiveCount3>0</ObjectiveCount3>
+      <ObjectiveCount4>0</ObjectiveCount4>
+      <ObjectiveCount5>0</ObjectiveCount5>
+      <AutoDetectObjectiveCount1>true</AutoDetectObjectiveCount1>
+      <AutoDetectObjectiveCount2>false</AutoDetectObjectiveCount2>
+      <AutoDetectObjectiveCount3>false</AutoDetectObjectiveCount3>
+      <AutoDetectObjectiveCount4>false</AutoDetectObjectiveCount4>
+      <AutoDetectObjectiveCount5>false</AutoDetectObjectiveCount5>
+      <CanCondition />
+      <IsCompleteCondition />
+      <RepeatableQuest>false</RepeatableQuest>
+      <NotRequiredInQuestLog>false</NotRequiredInQuestLog>
+      <PickUpQuestOnItem>false</PickUpQuestOnItem>
+      <PickUpQuestOnItemID>0</PickUpQuestOnItemID>
+      <Comment />
+      <GossipOptionRewardItem>1</GossipOptionRewardItem>
+      <RequiredQuest>0</RequiredQuest>
+      <MaxLevel>100</MaxLevel>
+      <MinLevel>0</MinLevel>
+      <WoWClass>None</WoWClass>
+    </EasyQuest>
+  </EasyQuests>
+  <Script>
+public class MyCustomScript
+{
+    static MyCustomScript()
+    {
+        // You can put here code to run when bot start, you can also add methods and classes.
+    }
+}
+</Script>
+  <OffMeshConnections />
+</EasyQuestProfile>

@@ -1,0 +1,7 @@
+# config/db.yaml
+database:
+  host: localhost
+  user: root
+  password: "19923003"
+  database: tbcmangos
+  port: 3306

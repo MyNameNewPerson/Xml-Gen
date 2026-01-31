@@ -1,0 +1,25 @@
+[
+  {
+    "zone_id": 188,
+    "zone_name": "Shadowglen",
+    "faction": "alliance",
+    "selected_quest_ids": [
+      456,
+      457,
+      458,
+      459,
+      916
+    ],
+    "grind_settings": {
+      "mob_id": 0,
+      "mob_name": "",
+      "min_level": 0,
+      "target_level": 0,
+      "hotspots": []
+    },
+    "run_to_points": [],
+    "include_vendors": true,
+    "include_trainers": true,
+    "include_flight_masters": true
+  }
+]
