@@ -1,6 +1,6 @@
 # exporter/easy_quest_xml.py
 import xml.etree.ElementTree as ET
-from xml.dom import minidom
+import re
 import math
 from typing import List, Dict, Any
 
@@ -16,14 +16,26 @@ from data_access.npc_repo import (
 from logic.clustering import cluster_spawns
 from logic.loot_resolver import resolve_loot_to_kills, resolve_loot_to_gos
 from logic.npc_registry import NPCRegistry
+from logic.quest_sorter import sort_quests_with_dependencies
 from core.coord_converter import get_zone_dimensions, is_coords_in_bounds
 
 logger = get_logger(__name__)
 
-def pretty_print_xml(element: ET.Element) -> str:
-    rough_string = ET.tostring(element, 'utf-8')
-    reparsed = minidom.parseString(rough_string)
-    return reparsed.toprettyxml(indent=" ")
+def indent(elem, level=0):
+    """Функция для красивого форматирования XML без использования minidom (который ломает текст)."""
+    i = "\n" + level*"  "
+    if len(elem):
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "  "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for elem in elem:
+            indent(elem, level+1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
 
 def clean_name(text: str) -> str:
     if not text: return "Unknown"
@@ -101,122 +113,44 @@ def add_quest_to_xml(easy_quests_node, quest, objs, quest_type, db, xsi_url):
         z_str = f"{h.center_z:.4f}".replace(',', '.')
         ET.SubElement(hs_node, "Vector3", X=x_str, Y=y_str, Z=z_str)
     
-    ET.SubElement(qc, "IsHotspots").text = "true" if hotspots else "false"
     ET.SubElement(qc, "IsGrinderNotQuest").text = "false"
     
+    # Сначала добавляем все ObjectiveCount
     for i in range(1, 6):
         count = next((o.count for o in objs if o.slot == i), 0)
         ET.SubElement(eq, f"ObjectiveCount{i}").text = str(count)
+        
+    # Затем добавляем все AutoDetectObjectiveCount
+    for i in range(1, 6):
+        count = next((o.count for o in objs if o.slot == i), 0)
         ET.SubElement(eq, f"AutoDetectObjectiveCount{i}").text = "true" if count > 0 else "false"
     
-    ET.SubElement(eq, "MinLevel").text = "0"
+    ET.SubElement(eq, "CanCondition")
+    ET.SubElement(eq, "IsCompleteCondition")
+    ET.SubElement(eq, "RepeatableQuest").text = "false"
+    ET.SubElement(eq, "NotRequiredInQuestLog").text = "false"
+    ET.SubElement(eq, "PickUpQuestOnItem").text = "false"
+    ET.SubElement(eq, "PickUpQuestOnItemID").text = "0"
+    ET.SubElement(eq, "Comment")
+    ET.SubElement(eq, "GossipOptionRewardItem").text = "1"
+    ET.SubElement(eq, "RequiredQuest").text = "0"
     ET.SubElement(eq, "MaxLevel").text = "100"
+    ET.SubElement(eq, "MinLevel").text = "0"
+    ET.SubElement(eq, "WoWClass").text = "None"
 
 def generate_csharp_script(sessions: List[ZoneSession], db: Database) -> str:
     """
-    Генерирует C# скрипт для WRobot (TBC 2.4.3), который предотвращает овер-фарм.
+    Возвращает базовый C# скрипт, как в примере.
     """
-    from data_access.quests_repo import get_quests_by_zone, get_objectives_for_quest
-    
-    lines = []
-    lines.append("using System;")
-    lines.append("using System.Collections.Generic;")
-    lines.append("using System.Threading;")
-    lines.append("using wManager.Wow.Helpers;")
-    lines.append("using wManager.Wow.ObjectManager;")
-    lines.append("using robotManager.Helpful;")
-    lines.append("")
-    lines.append("public class MyCustomScript")
-    lines.append("{")
-    lines.append("    public static Dictionary<int, Dictionary<int, int>> QuestMobMap = new Dictionary<int, Dictionary<int, int>>();")
-    lines.append("    private static bool _running = true;")
-    lines.append("")
-    lines.append("    static MyCustomScript()")
-    lines.append("    {")
-    lines.append("        try")
-    lines.append("        {")
-    
-    processed_quests = set()
-    for session in sessions:
-        if not session.zone_id: continue
-        zone_quests = get_quests_by_zone(db, session.zone_id)
-        selected = [q for q in zone_quests if q.entry in session.selected_quest_ids]
-        
-        for q in selected:
-            if q.entry in processed_quests: continue
-            processed_quests.add(q.entry)
-            
-            objs = get_objectives_for_quest(db, q.entry)
-            for obj in objs:
-                if obj.type == 'kill' and obj.target_id:
-                    lines.append(f"            InitQuest({q.entry}, {obj.target_id}, {obj.slot});")
-
-    lines.append("            new Thread(Loop).Start();")
-    lines.append("        }")
-    lines.append("        catch (Exception e)")
-    lines.append("        {")
-    lines.append('            Logging.WriteError("SmartKill Script Init Error: " + e.ToString());')
-    lines.append("        }")
-    lines.append("    }")
-    lines.append("")
-    lines.append("    public static void InitQuest(int questId, int mobId, int objIndex)")
-    lines.append("    {")
-    lines.append("        if (!QuestMobMap.ContainsKey(questId))")
-    lines.append("        {")
-    lines.append("            QuestMobMap.Add(questId, new Dictionary<int, int>());")
-    lines.append("        }")
-    lines.append("        if (!QuestMobMap[questId].ContainsKey(mobId))")
-    lines.append("        {")
-    lines.append("            QuestMobMap[questId].Add(mobId, objIndex);")
-    lines.append("        }")
-    lines.append("    }")
-    lines.append("")
-    lines.append("    public static void Loop()")
-    lines.append("    {")
-    lines.append("        while (_running && wManager.wManagerSetting.CurrentSetting.IsStarted)")
-    lines.append("        {")
-    lines.append("            try")
-    lines.append("            {")
-    lines.append("                if (Conditions.InGameAndConnectedAndAliveAndProductStartedNotInPause)")
-    lines.append("                {")
-    lines.append("                    long targetGuid = ObjectManager.Me.Target;")
-    lines.append("                    if (targetGuid > 0)")
-    lines.append("                    {")
-    lines.append("                        WoWUnit target = ObjectManager.GetObjectByGuid(targetGuid) as WoWUnit;")
-    lines.append("                        if (target != null && target.IsValid && target.IsAlive)")
-    lines.append("                        {")
-    lines.append("                            int mobId = target.Entry;")
-    lines.append("                            foreach (int qId in QuestMobMap.Keys)")
-    lines.append("                            {")
-    lines.append("                                if (QuestMobMap[qId].ContainsKey(mobId))")
-    lines.append("                                {")
-    lines.append("                                    int logIndex = Quest.GetQuestLogIndexByID(qId);")
-    lines.append("                                    if (logIndex > 0)")
-    lines.append("                                    {")
-    lines.append("                                        int objIdx = QuestMobMap[qId][mobId];")
-    lines.append('                                        string res = Lua.LuaDoString("return tostring(select(3, GetQuestLogLeaderBoard(" + objIdx + ", " + logIndex + ")))");')
-    lines.append('                                        if (res == "true" || res == "1")')
-    lines.append("                                        {")
-    lines.append("                                            wManager.wManagerSetting.AddBlackList(targetGuid, 5000, true);")
-    lines.append("                                            wManager.Wow.Helpers.Fight.StopFight();")
-    lines.append("                                            wManager.Wow.Helpers.MovementManager.StopMove();")
-    lines.append('                                            Logging.Write("[SmartKill] Blacklisted " + target.Name + " (Objective Complete).");')
-    lines.append("                                        }")
-    lines.append("                                        break;")
-    lines.append("                                    }")
-    lines.append("                                }")
-    lines.append("                            }")
-    lines.append("                        }")
-    lines.append("                    }")
-    lines.append("                }")
-    lines.append("            }")
-    lines.append("            catch (Exception e) { Logging.WriteError(\"SmartKill Loop: \" + e.ToString()); }")
-    lines.append("            Thread.Sleep(200);")
-    lines.append("        }")
-    lines.append("    }")
-    lines.append("}")
-    
-    return "\n".join(lines)
+    return """
+public class MyCustomScript
+{
+    static MyCustomScript()
+    {
+        // You can put here code to run when bot start, you can also add methods and classes.
+    }
+}
+"""
 
 def resolve_trainer_type(subname: str) -> str:
     """
@@ -291,42 +225,103 @@ def fetch_npcs_spatially(db: Database, zone_id: int, map_id: int, flag_mask: int
 
 def add_grind_to_xml(easy_quests_node, session: ZoneSession, xsi_url):
     gs = session.grind_settings
-    if not gs.hotspots and not gs.mob_id: return
+    # Собираем все ID (и одиночный, и список)
+    mob_ids = set()
+    if gs.mob_id:
+        mob_ids.add(gs.mob_id)
+    if hasattr(gs, 'mob_ids'):
+        mob_ids.update(gs.mob_ids)
+        
+    if not gs.hotspots and not mob_ids: return
     
-    name = f"Grind_{clean_name(session.zone_name)}_{gs.target_level}"
+    target_lvl = gs.target_level if gs.target_level > 0 else 100
+    name = f"Grind{clean_name(session.zone_name)}{target_lvl}"
     eq = ET.SubElement(easy_quests_node, "EasyQuest")
     ET.SubElement(eq, "Name").text = name
-    ET.SubElement(ET.SubElement(eq, "QuestId"), "int").text = "0"
+    ET.SubElement(eq, "QuestId")
     ET.SubElement(eq, "QuestType").text = "KillAndLoot"
     
     qc = ET.SubElement(eq, "QuestClass", attrib={f"{{{xsi_url}}}type": "KillAndLootEasyQuestClass"})
     
-    et = ET.SubElement(qc, "EntryTarget")
-    if gs.mob_id:
-        ET.SubElement(et, "int").text = str(gs.mob_id)
-    
-    ET.SubElement(qc, "EntryIdObjects")
-    
     hs_node = ET.SubElement(qc, "HotSpots")
     for h in gs.hotspots:
-        # Формат координат: точка вместо запятой
         x_str = f"{h.x:.4f}".replace(',', '.')
         y_str = f"{h.y:.4f}".replace(',', '.')
         z_str = f"{h.z:.4f}".replace(',', '.')
         ET.SubElement(hs_node, "Vector3", X=x_str, Y=y_str, Z=z_str)
     
-    ET.SubElement(qc, "IsHotspots").text = "true" if gs.hotspots else "false"
+    et = ET.SubElement(qc, "EntryTarget")
+    # Сортируем ID для порядка
+    for mid in sorted(list(mob_ids)):
+        ET.SubElement(et, "int").text = str(mid)
+    
     ET.SubElement(qc, "IsGrinderNotQuest").text = "true"
     
+    # Сначала ObjectiveCount
     for i in range(1, 6):
         ET.SubElement(eq, f"ObjectiveCount{i}").text = "0"
+        
+    # Затем AutoDetectObjectiveCount
+    for i in range(1, 6):
         ET.SubElement(eq, f"AutoDetectObjectiveCount{i}").text = "false"
     
-    can_cond = ET.SubElement(eq, "CanCondition")
-    can_cond.text = f"return ObjectManager.Me.Level >= {gs.min_level} && ObjectManager.Me.Level < {gs.target_level};"
+    ET.SubElement(eq, "CanCondition")
+    ET.SubElement(eq, "IsCompleteCondition")
+    ET.SubElement(eq, "RepeatableQuest").text = "false"
+    ET.SubElement(eq, "NotRequiredInQuestLog").text = "false"
+    ET.SubElement(eq, "PickUpQuestOnItem").text = "false"
+    ET.SubElement(eq, "PickUpQuestOnItemID").text = "0"
+    ET.SubElement(eq, "Comment")
+    ET.SubElement(eq, "GossipOptionRewardItem").text = "1"
+    ET.SubElement(eq, "RequiredQuest").text = "0"
+    ET.SubElement(eq, "MaxLevel").text = str(target_lvl)
+    ET.SubElement(eq, "MinLevel").text = str(gs.min_level)
+    ET.SubElement(eq, "WoWClass").text = "None"
+
+def add_follow_path_to_xml(easy_quests_node, session: ZoneSession, xsi_url):
+    if not session.run_to_points: return
     
-    ET.SubElement(eq, "MinLevel").text = "0"
+    name = f"RunTo{clean_name(session.zone_name)}"
+    eq = ET.SubElement(easy_quests_node, "EasyQuest")
+    ET.SubElement(eq, "Name").text = name
+    ET.SubElement(eq, "QuestId")
+    ET.SubElement(eq, "QuestType").text = "FollowPath"
+    
+    qc = ET.SubElement(eq, "QuestClass", attrib={f"{{{xsi_url}}}type": "FollowPathEasyQuestClass"})
+    
+    path_node = ET.SubElement(qc, "Path")
+    for rt in session.run_to_points:
+        x_str = f"{rt.x:.4f}".replace(',', '.')
+        y_str = f"{rt.y:.4f}".replace(',', '.')
+        z_str = f"{rt.z:.4f}".replace(',', '.')
+        ET.SubElement(path_node, "Vector3", X=x_str, Y=y_str, Z=z_str)
+    
+    # Ставим true, чтобы квест завершался по прибытии в конец пути
+    ET.SubElement(qc, "IsCompleteWhenAtLastPath").text = "true"
+    ET.SubElement(qc, "ForceToStartFirstPosition").text = "false"
+    ET.SubElement(qc, "IsHotSpots").text = "false"
+    ET.SubElement(qc, "IsLoop").text = "false"
+    
+    # Сначала ObjectiveCount
+    for i in range(1, 6):
+        ET.SubElement(eq, f"ObjectiveCount{i}").text = "0"
+        
+    # Затем AutoDetectObjectiveCount
+    for i in range(1, 6):
+        ET.SubElement(eq, f"AutoDetectObjectiveCount{i}").text = "false"
+    
+    ET.SubElement(eq, "CanCondition")
+    ET.SubElement(eq, "IsCompleteCondition")
+    ET.SubElement(eq, "RepeatableQuest").text = "false"
+    ET.SubElement(eq, "NotRequiredInQuestLog").text = "false"
+    ET.SubElement(eq, "PickUpQuestOnItem").text = "false"
+    ET.SubElement(eq, "PickUpQuestOnItemID").text = "0"
+    ET.SubElement(eq, "Comment")
+    ET.SubElement(eq, "GossipOptionRewardItem").text = "1"
+    ET.SubElement(eq, "RequiredQuest").text = "0"
     ET.SubElement(eq, "MaxLevel").text = "100"
+    ET.SubElement(eq, "MinLevel").text = "0"
+    ET.SubElement(eq, "WoWClass").text = "None"
 
 def get_continent_name_by_map_id(map_id: int) -> str:
     """
@@ -351,6 +346,8 @@ def generate_easy_quest_xml(sessions: List[ZoneSession], filename: str):
     quests_sorted = ET.SubElement(root, "QuestsSorted")
     npc_quest_section = ET.SubElement(root, "NpcQuest")
     npc_section = ET.SubElement(root, "Npc")
+    ET.SubElement(root, "Blackspots")
+    ET.SubElement(root, "BlackGuids")
     easy_quests_node = ET.SubElement(root, "EasyQuests")
     
     from data_access.quests_repo import get_quests_by_zone, get_objectives_for_quest
@@ -363,6 +360,9 @@ def generate_easy_quest_xml(sessions: List[ZoneSession], filename: str):
         # 1. Загрузка квестов
         zone_quests = get_quests_by_zone(db, session.zone_id)
         selected = [q for q in zone_quests if q.entry in session.selected_quest_ids]
+        
+        # Сортируем квесты: сначала преквесты, потом следующие, и по уровню
+        selected = sort_quests_with_dependencies(selected)
         
         # 2. Обработка квестов
         for q in selected:
@@ -405,15 +405,19 @@ def generate_easy_quest_xml(sessions: List[ZoneSession], filename: str):
                         ET.SubElement(section, "int").text = str(q.entry)
 
         # 3. Гриндинг
-        if session.grind_settings.mob_id or session.grind_settings.hotspots:
-            grind_name = f"Grind_{clean_name(session.zone_name)}_{session.grind_settings.target_level}"
+        # Проверяем наличие mob_id, hotspots ИЛИ списка mob_ids
+        has_mob_ids = getattr(session.grind_settings, 'mob_ids', None)
+        if session.grind_settings.mob_id or session.grind_settings.hotspots or has_mob_ids:
+            target_lvl = session.grind_settings.target_level if session.grind_settings.target_level > 0 else 100
+            grind_name = f"Grind{clean_name(session.zone_name)}{target_lvl}"
             ET.SubElement(quests_sorted, "QuestsSorted", Action="Pulse", NameClass=grind_name)
             add_grind_to_xml(easy_quests_node, session, xsi_url)
 
         # 4. Точки пути
-        for rt in session.run_to_points:
-            coords_str = f"{rt.x}, {rt.y}, {rt.z}"
-            ET.SubElement(quests_sorted, "QuestsSorted", Action="RunTo", NameClass=coords_str)
+        if session.run_to_points:
+            run_to_name = f"RunTo{clean_name(session.zone_name)}"
+            ET.SubElement(quests_sorted, "QuestsSorted", Action="Pulse", NameClass=run_to_name)
+            add_follow_path_to_xml(easy_quests_node, session, xsi_url)
 
         # 5. Логистика (Вендоры, Тренеры и т.д.)
         dims = get_zone_dimensions(session.zone_id)
@@ -474,7 +478,21 @@ def generate_easy_quest_xml(sessions: List[ZoneSession], filename: str):
         continent_name = get_continent_name_by_map_id(int(n.get('Map', 0)))
         ET.SubElement(npc_node, "ContinentId").text = continent_name
 
-    xml_str = pretty_print_xml(root).replace('<?xml version="1.0" ?>', '<?xml version="1.0" encoding="utf-16"?>')
+    script_node = ET.SubElement(root, "Script")
+    script_node.text = generate_csharp_script(sessions, db)
+    ET.SubElement(root, "OffMeshConnections")
+
+    # Форматируем XML
+    indent(root)
+    xml_content = ET.tostring(root, encoding='unicode')
+
+    # ВАЖНО: Добавляем пространства имен в корневой тег вручную, иначе WRobot не видит типы квестов
+    # Используем regex для надежной замены, так как ET может сам добавить xmlns:xsi, но забыть xmlns:xsd
+    new_root_tag = f'<EasyQuestProfile xmlns:xsi="{xsi_url}" xmlns:xsd="{xsd_url}">'
+    xml_content = re.sub(r'<EasyQuestProfile[^>]*>', new_root_tag, xml_content, count=1)
+
+    final_xml = '<?xml version="1.0" encoding="utf-16"?>\n' + xml_content
+
     with open(filename, "w", encoding="utf-16") as f:
-        f.write(xml_str)
+        f.write(final_xml)
     db.close()

@@ -1,6 +1,8 @@
 # ui/zone_panel.py
 import tkinter as tk
 from tkinter import ttk, messagebox
+import xml.etree.ElementTree as ET
+import re
 import ttkbootstrap as ttkb
 from ttkbootstrap.constants import *
 from typing import List, Dict, Optional
@@ -32,6 +34,7 @@ class ZonePanel(ttkb.Frame):
         self.quests: List = []
         self.objectives: Dict = {}
         self.check_vars: Dict[str, tk.BooleanVar] = {}
+        self._loading = False  # Флаг для предотвращения автосохранения при загрузке
         
         self.create_widgets()
         
@@ -66,71 +69,81 @@ class ZonePanel(ttkb.Frame):
         config_parent.pack(fill=tk.X, pady=10)
 
         # 1. Настройки Гринда
-        # ИСПРАВЛЕНО: Убран padding из конструктора LabelFrame
-        self.grind_frame = ttkb.LabelFrame(config_parent, text="Настройки Гринда (Фарм мобов)")
+        self.grind_frame = ttkb.LabelFrame(config_parent, text="Настройки Гринда (Цель)")
         self.grind_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
         
-        # Ряд 1: Моб и Уровни
+        # Уровни (Min-Max)
         g_row1 = ttkb.Frame(self.grind_frame, padding=5)
         g_row1.pack(fill=tk.X)
         
-        ttkb.Label(g_row1, text="Mob ID:").pack(side=tk.LEFT)
-        self.mob_id_var = tk.StringVar()
-        ttkb.Entry(g_row1, textvariable=self.mob_id_var, width=8, bootstyle="secondary").pack(side=tk.LEFT, padx=5)
-        
-        ttkb.Label(g_row1, text="Имя (опц.):").pack(side=tk.LEFT)
-        self.mob_name_var = tk.StringVar()
-        ttkb.Entry(g_row1, textvariable=self.mob_name_var, width=15).pack(side=tk.LEFT, padx=5)
-        
-        ttkb.Label(g_row1, text="Уровни (Min-Max):").pack(side=tk.LEFT, padx=(10, 2))
+        ttkb.Label(g_row1, text="Уровни (Min-Max):").pack(side=tk.LEFT)
         self.min_lvl_var = tk.StringVar(value="0")
-        ttkb.Entry(g_row1, textvariable=self.min_lvl_var, width=4).pack(side=tk.LEFT)
+        self.min_lvl_var.trace_add("write", self.auto_save_levels)
+        self.min_lvl_entry = ttkb.Entry(g_row1, textvariable=self.min_lvl_var, width=5)
+        self.min_lvl_entry.pack(side=tk.LEFT, padx=2)
+        self.enable_text_features(self.min_lvl_entry)
+        
         ttkb.Label(g_row1, text="-").pack(side=tk.LEFT)
         self.target_lvl_var = tk.StringVar(value="0")
-        ttkb.Entry(g_row1, textvariable=self.target_lvl_var, width=4).pack(side=tk.LEFT)
+        self.target_lvl_var.trace_add("write", self.auto_save_levels)
+        self.target_lvl_entry = ttkb.Entry(g_row1, textvariable=self.target_lvl_var, width=5)
+        self.target_lvl_entry.pack(side=tk.LEFT, padx=2)
+        self.enable_text_features(self.target_lvl_entry)
         
-        # Ряд 2: Координаты
-        g_row2 = ttkb.Frame(self.grind_frame, padding=5)
-        g_row2.pack(fill=tk.BOTH, expand=True)
+        # Поле ввода XML
+        ttkb.Label(self.grind_frame, text="Вставь XML NPC (<Npc>...):").pack(anchor=tk.W, padx=5)
+        self.grind_input = tk.Text(self.grind_frame, height=4, width=40, font=("Consolas", 8))
+        self.grind_input.pack(fill=tk.X, padx=5, pady=2)
+        self.enable_text_features(self.grind_input)
         
-        ttkb.Label(g_row2, text="Вставь сюда координаты из WRobot:").pack(anchor=tk.W)
-        self.hotspots_text = tk.Text(g_row2, height=5, width=40, font=("Consolas", 8))
-        self.hotspots_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=2)
-        
-        g_btns = ttkb.Frame(g_row2)
-        g_btns.pack(side=tk.RIGHT, fill=tk.Y, padx=5)
-        
-        ttkb.Button(g_btns, text="Парсить\nКоординаты", bootstyle=(INFO, OUTLINE), command=self.parse_hotspots).pack(fill=tk.X, pady=2)
-        ttkb.Button(g_btns, text="Сохранить\nНастройки", bootstyle=(SUCCESS), command=self.save_grind_settings).pack(fill=tk.X, pady=2)
+        # Кнопка и Инфо
+        g_bot = ttkb.Frame(self.grind_frame, padding=5)
+        g_bot.pack(fill=tk.X)
+        ttkb.Button(g_bot, text="Применить цель", bootstyle=INFO, command=self.parse_grind_target).pack(side=tk.LEFT)
+        self.grind_info_label = ttkb.Label(g_bot, text="Нет цели", font=("Segoe UI", 8), foreground="gray")
+        self.grind_info_label.pack(side=tk.LEFT, padx=10)
 
         # 2. Настройки Логистики
-        # ИСПРАВЛЕНО: Убран padding из конструктора LabelFrame
-        self.logistics_frame = ttkb.LabelFrame(config_parent, text="Логистика и Навигация")
+        self.logistics_frame = ttkb.LabelFrame(config_parent, text="Логистика (RunTo)")
         self.logistics_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
         l_row1 = ttkb.Frame(self.logistics_frame, padding=5)
         l_row1.pack(fill=tk.X)
         
         self.inc_vendors_var = tk.BooleanVar(value=self.session.include_vendors)
-        ttkb.Checkbutton(l_row1, text="Вендоры (Ремонт/Еда)", variable=self.inc_vendors_var, bootstyle="round-toggle").pack(anchor=tk.W, pady=2)
+        self.inc_vendors_var.trace_add("write", lambda *a: setattr(self.session, 'include_vendors', self.inc_vendors_var.get()))
+        ttkb.Checkbutton(l_row1, text="Вендоры", variable=self.inc_vendors_var).pack(side=tk.LEFT, padx=2)
         
         self.inc_trainers_var = tk.BooleanVar(value=self.session.include_trainers)
-        ttkb.Checkbutton(l_row1, text="Тренеры Класса", variable=self.inc_trainers_var, bootstyle="round-toggle").pack(anchor=tk.W, pady=2)
+        self.inc_trainers_var.trace_add("write", lambda *a: setattr(self.session, 'include_trainers', self.inc_trainers_var.get()))
+        ttkb.Checkbutton(l_row1, text="Тренеры", variable=self.inc_trainers_var).pack(side=tk.LEFT, padx=2)
         
         self.inc_fms_var = tk.BooleanVar(value=self.session.include_flight_masters)
-        ttkb.Checkbutton(l_row1, text="Мастера Полетов", variable=self.inc_fms_var, bootstyle="round-toggle").pack(anchor=tk.W, pady=2)
+        self.inc_fms_var.trace_add("write", lambda *a: setattr(self.session, 'include_flight_masters', self.inc_fms_var.get()))
+        ttkb.Checkbutton(l_row1, text="Полеты", variable=self.inc_fms_var).pack(side=tk.LEFT, padx=2)
 
-        l_row2 = ttkb.Frame(self.logistics_frame, padding=5)
-        l_row2.pack(fill=tk.BOTH, expand=True)
+        # Список точек
+        self.run_to_list = tk.Listbox(self.logistics_frame, height=3, font=("Segoe UI", 9))
+        self.run_to_list.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
         
-        ttkb.Label(l_row2, text="Точки перехода (RunTo):").pack(anchor=tk.W)
-        self.run_to_list = tk.Listbox(l_row2, height=3, font=("Segoe UI", 9))
-        self.run_to_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Ввод координат
+        l_bot = ttkb.Frame(self.logistics_frame, padding=5)
+        l_bot.pack(fill=tk.X)
+        ttkb.Label(l_bot, text="Вставь координаты (можно списком):").pack(anchor=tk.W, padx=2)
         
-        l_btns = ttkb.Frame(l_row2)
-        l_btns.pack(side=tk.RIGHT, fill=tk.Y, padx=5)
-        ttkb.Button(l_btns, text="+", bootstyle=SUCCESS, command=self.add_run_to, width=4).pack(pady=2)
-        ttkb.Button(l_btns, text="-", bootstyle=DANGER, command=self.remove_run_to, width=4).pack(pady=2)
+        input_container = ttkb.Frame(l_bot)
+        input_container.pack(fill=tk.X, expand=True)
+        
+        self.run_to_input = tk.Text(input_container, height=3, width=30, font=("Consolas", 8))
+        self.run_to_input.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        self.enable_text_features(self.run_to_input)
+        
+        btn_box = ttkb.Frame(input_container)
+        btn_box.pack(side=tk.LEFT, fill=tk.Y)
+        
+        ttkb.Button(btn_box, text="+", width=3, bootstyle=SUCCESS, command=self.add_run_to_from_input).pack(fill=tk.X, pady=1)
+        ttkb.Button(btn_box, text="-", width=3, bootstyle=DANGER, command=self.remove_run_to).pack(fill=tk.X, pady=1)
+        ttkb.Button(btn_box, text="Clr", width=3, bootstyle=SECONDARY, command=lambda: self.run_to_input.delete("1.0", tk.END)).pack(fill=tk.X, pady=1)
 
         # --- Таблица квестов ---
         tree_frame = ttkb.Frame(self)
@@ -160,51 +173,111 @@ class ZonePanel(ttkb.Frame):
         self.tree.bind("<Double-1>", self.on_tree_double_click)
         self.tree.bind("<Button-3>", self.on_right_click)
 
-    def parse_hotspots(self):
-        """Парсит текст из поля ввода и превращает его в XML-вид."""
-        raw_text = self.hotspots_text.get("1.0", tk.END)
-        hotspots = parse_vector3_strings(raw_text)
+    def parse_grind_target(self):
+        """Парсит XML NPC и добавляет цель гринда (ID и Hotspot)."""
+        text = self.grind_input.get("1.0", tk.END).strip()
+        if not text: return
         
-        if hotspots:
-            self.hotspots_text.delete("1.0", tk.END)
-            # Выводим обратно в красивом формате, чтобы пользователь видел результат
-            for h in hotspots:
-                self.hotspots_text.insert(tk.END, f'<Vector3 X="{h.x}" Y="{h.y}" Z="{h.z}" />\n')
-            
-            # Сразу сохраняем в сессию
-            self.session.grind_settings.hotspots = hotspots
-            messagebox.showinfo("Успех", f"Найдено и добавлено точек: {len(hotspots)}")
-        else:
-            messagebox.showwarning("Внимание", "Координаты не найдены.\nВставь текст вида:\nMy Position: -9400.98, -2036.69, 58.38")
+        try:
+            # Если пользователь вставил просто текст, а не XML
+            if not text.startswith("<"):
+                messagebox.showwarning("Ошибка", "Ожидается XML формат <Npc>...</Npc>")
+                return
 
-    def add_run_to(self):
-        dialog = ttkb.Toplevel(self)
-        dialog.title("Добавить точку RunTo")
-        dialog.geometry("400x250")
+            # Оборачиваем в фейковый корень, чтобы распарсить несколько <Npc> подряд
+            wrapped_text = f"<Root>{text}</Root>"
+            try:
+                root = ET.fromstring(wrapped_text)
+            except ET.ParseError:
+                # Если не получилось, пробуем как есть
+                root = ET.fromstring(text)
+            
+            # Инициализируем список ID, если его нет (для поддержки множества мобов)
+            if not hasattr(self.session.grind_settings, 'mob_ids'):
+                self.session.grind_settings.mob_ids = set()
+                if self.session.grind_settings.mob_id:
+                    self.session.grind_settings.mob_ids.add(self.session.grind_settings.mob_id)
+            
+            # 1. Ищем все Entry (рекурсивно)
+            for entry_node in root.findall(".//Entry"):
+                new_id = int(entry_node.text)
+                self.session.grind_settings.mob_ids.add(new_id)
+                self.session.grind_settings.mob_id = new_id # Обновляем последний для UI
+            
+            # 2. Ищем имя (берем первое попавшееся)
+            if not self.session.grind_settings.mob_name:
+                name_node = root.find(".//Name")
+                if name_node is not None:
+                    self.session.grind_settings.mob_name = name_node.text
+                
+            # 3. Ищем координаты (Vector3 или Position)
+            def add_spot(node):
+                if node is None: return
+                x = float(vec.get("X"))
+                y = float(vec.get("Y"))
+                z = float(vec.get("Z"))
+                from core.models import Hotspot
+                
+                # Проверяем на дубликаты координат (простое сравнение)
+                new_spot = Hotspot(x, y, z)
+                exists = False
+                for h in self.session.grind_settings.hotspots:
+                    if abs(h.x - x) < 1.0 and abs(h.y - y) < 1.0:
+                        exists = True
+                        break
+                
+                if not exists:
+                    self.session.grind_settings.hotspots.append(new_spot)
+
+            for vec in root.findall(".//Vector3"): add_spot(vec)
+            for pos in root.findall(".//Position"): add_spot(pos)
+
+            self.update_grind_ui_info()
+            self.grind_input.delete("1.0", tk.END)
+            
+        except Exception as e:
+            logger.error(f"XML Parse Error: {e}")
+            messagebox.showerror("Ошибка", f"Неверный формат XML: {e}")
+
+    def add_run_to_from_input(self):
+        """Добавляет точку RunTo из строки координат."""
+        text = self.run_to_input.get("1.0", tk.END).strip()
+        if not text: return
         
-        ttkb.Label(dialog, text="Название точки:").pack(pady=5)
-        name_entry = ttkb.Entry(dialog, width=30)
-        name_entry.pack(pady=5)
-        name_entry.insert(0, f"RunTo {self.run_to_list.size() + 1}")
+        lines = text.split('\n')
+        added_count = 0
         
-        ttkb.Label(dialog, text="Координаты (вставь из WRobot):").pack(pady=5)
-        coords_entry = ttkb.Entry(dialog, width=40)
-        coords_entry.pack(pady=5)
-        
-        def save():
-            raw = coords_entry.get()
-            pts = parse_vector3_strings(raw)
-            if pts:
-                p = pts[0]
+        for line in lines:
+            line = line.strip()
+            if not line: continue
+            
+            x, y, z = 0.0, 0.0, 0.0
+            found = False
+            
+            # 1. Пробуем XML формат: <Vector3 X="..." ... />
+            xml_match = re.search(r'X="([\d\.-]+)"\s+Y="([\d\.-]+)"\s+Z="([\d\.-]+)"', line)
+            if xml_match:
+                x, y, z = float(xml_match.group(1)), float(xml_match.group(2)), float(xml_match.group(3))
+                found = True
+            else:
+                # 2. Пробуем формат через запятую: 123.45, 67.89, 0.0
+                floats = re.findall(r'(-?\d+(?:\.\d+)?)', line)
+                if len(floats) >= 3:
+                    x, y, z = float(floats[0]), float(floats[1]), float(floats[2])
+                    found = True
+            
+            if found:
                 from core.models import RunTo
-                rt = RunTo(x=p.x, y=p.y, z=p.z, name=name_entry.get())
+                name = f"RunTo {len(self.session.run_to_points) + 1}"
+                rt = RunTo(x, y, z, name)
                 self.session.run_to_points.append(rt)
                 self.run_to_list.insert(tk.END, f"{rt.name} ({rt.x:.1f}, {rt.y:.1f}, {rt.z:.1f})")
-                dialog.destroy()
-            else:
-                messagebox.showerror("Ошибка", "Не удалось распознать координаты!")
-
-        ttkb.Button(dialog, text="Добавить", command=save, bootstyle=SUCCESS).pack(pady=10)
+                added_count += 1
+        
+        if added_count > 0:
+            self.run_to_input.delete("1.0", tk.END)
+        else:
+            messagebox.showwarning("Ошибка", "Не удалось распознать координаты")
 
     def remove_run_to(self):
         idx = self.run_to_list.curselection()
@@ -212,45 +285,41 @@ class ZonePanel(ttkb.Frame):
             self.session.run_to_points.pop(idx[0])
             self.run_to_list.delete(idx[0])
 
-    def save_grind_settings(self):
-        try:
-            # Сохраняем ID моба
-            mid = self.mob_id_var.get().strip()
-            self.session.grind_settings.mob_id = int(mid) if mid.isdigit() else 0
-            self.session.grind_settings.mob_name = self.mob_name_var.get()
-            
-            # Сохраняем уровни
-            min_l = self.min_lvl_var.get().strip()
-            max_l = self.target_lvl_var.get().strip()
-            self.session.grind_settings.min_level = int(min_l) if min_l.isdigit() else 0
-            self.session.grind_settings.target_level = int(max_l) if max_l.isdigit() else 0
-            
-            # Сохраняем логистику
-            self.session.include_vendors = self.inc_vendors_var.get()
-            self.session.include_trainers = self.inc_trainers_var.get()
-            self.session.include_flight_masters = self.inc_fms_var.get()
+    def auto_save_levels(self, *args):
+        # Если идет программная загрузка данных, не сохраняем (иначе перезапишем нулями)
+        if self._loading: return
 
-            # Хотспоты уже обновляются в parse_hotspots, но на всякий случай парсим текущий текст
-            raw_text = self.hotspots_text.get("1.0", tk.END)
-            parsed = parse_vector3_strings(raw_text)
-            if parsed:
-                self.session.grind_settings.hotspots = parsed
-            
-            logger.info(f"Settings saved for zone {self.session.zone_id}")
-            # Не показываем popup каждый раз, чтобы не бесить, просто лог
+        # Сохраняем Min Level
+        try:
+            val = self.min_lvl_var.get().strip()
+            if val: self.session.grind_settings.min_level = int(val)
         except ValueError:
-            messagebox.showerror("Ошибка", "В полях уровней или ID должны быть числа!")
+            pass
+            
+        # Сохраняем Max Level
+        try:
+            val = self.target_lvl_var.get().strip()
+            if val: self.session.grind_settings.target_level = int(val)
+        except ValueError:
+            pass
 
     def load_grind_settings(self):
-        gs = self.session.grind_settings
-        self.mob_id_var.set(str(gs.mob_id) if gs.mob_id else "")
-        self.mob_name_var.set(gs.mob_name if gs.mob_name else "")
-        self.min_lvl_var.set(str(gs.min_level))
-        self.target_lvl_var.set(str(gs.target_level))
-        
-        self.hotspots_text.delete("1.0", tk.END)
-        for h in gs.hotspots:
-            self.hotspots_text.insert(tk.END, f'<Vector3 X="{h.x}" Y="{h.y}" Z="{h.z}" />\n')
+        self._loading = True
+        try:
+            gs = self.session.grind_settings
+            
+            # Восстанавливаем mob_ids если его нет, но есть mob_id
+            if not hasattr(gs, 'mob_ids'):
+                gs.mob_ids = set()
+                if gs.mob_id:
+                    gs.mob_ids.add(gs.mob_id)
+            
+            self.min_lvl_var.set(str(gs.min_level))
+            self.target_lvl_var.set(str(gs.target_level))
+        finally:
+            self._loading = False
+            
+        self.update_grind_ui_info()
 
         self.inc_vendors_var.set(self.session.include_vendors)
         self.inc_trainers_var.set(self.session.include_trainers)
@@ -259,6 +328,20 @@ class ZonePanel(ttkb.Frame):
         self.run_to_list.delete(0, tk.END)
         for rt in self.session.run_to_points:
             self.run_to_list.insert(tk.END, f"{rt.name} ({rt.x:.1f}, {rt.y:.1f}, {rt.z:.1f})")
+
+    def update_grind_ui_info(self):
+        gs = self.session.grind_settings
+        # Подсчет ID
+        ids_count = 0
+        if hasattr(gs, 'mob_ids'):
+            ids_count = len(gs.mob_ids)
+        elif gs.mob_id:
+            ids_count = 1
+            
+        info = f"IDs: {ids_count}"
+        if gs.mob_name: info += f" | {gs.mob_name}"
+        if gs.hotspots: info += f" | Точек: {len(gs.hotspots)}"
+        self.grind_info_label.config(text=info)
 
     def on_zone_search(self, event):
         query = self.zone_combo.get().lower()
@@ -385,3 +468,83 @@ class ZonePanel(ttkb.Frame):
         
         data = get_quest_details(self.db, quest_id)
         QuestInfoDialog(self, title, data)
+
+    def enable_text_features(self, widget):
+        """Включает поддержку горячих клавиш и контекстного меню для виджета."""
+        self.setup_text_bindings(widget)
+        widget.bind("<Button-3>", self.show_context_menu)
+
+    def show_context_menu(self, event):
+        """Отображает контекстное меню при клике ПКМ."""
+        menu = tk.Menu(self, tearoff=0)
+        menu.add_command(label="Копировать", command=lambda: self.perform_copy(event.widget))
+        menu.add_command(label="Вставить", command=lambda: self.perform_paste(event.widget))
+        menu.add_command(label="Вырезать", command=lambda: self.perform_cut(event.widget))
+        menu.add_separator()
+        menu.add_command(label="Выделить всё", command=lambda: self.perform_select_all(event.widget))
+        menu.tk_popup(event.x_root, event.y_root)
+
+    def setup_text_bindings(self, widget):
+        """Добавляет поддержку Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A."""
+        # Стандартные (латиница)
+        widget.bind("<Control-a>", self._on_select_all)
+        widget.bind("<Control-c>", self._on_copy)
+        widget.bind("<Control-v>", self._on_paste)
+        widget.bind("<Control-x>", self._on_cut)
+        # Русская раскладка (чтобы работало без переключения языка)
+        widget.bind("<Control-Cyrillic_ef>", self._on_select_all) # A -> Ф
+        widget.bind("<Control-Cyrillic_es>", self._on_copy)       # C -> С
+        widget.bind("<Control-Cyrillic_em>", self._on_paste)      # V -> М
+        widget.bind("<Control-Cyrillic_che>", self._on_cut)       # X -> Ч
+
+    # --- Обработчики событий (вызывают логику) ---
+    def _on_select_all(self, event):
+        self.perform_select_all(event.widget)
+        return "break"
+
+    def _on_copy(self, event):
+        self.perform_copy(event.widget)
+        return "break"
+
+    def _on_paste(self, event):
+        self.perform_paste(event.widget)
+        return "break"
+
+    def _on_cut(self, event):
+        self.perform_cut(event.widget)
+        return "break"
+
+    # --- Логика операций (работает и для Text, и для Entry) ---
+    def perform_select_all(self, widget):
+        if isinstance(widget, tk.Text):
+            widget.tag_add("sel", "1.0", "end")
+        elif isinstance(widget, (tk.Entry, ttk.Entry)):
+            widget.selection_range(0, tk.END)
+
+    def perform_copy(self, widget):
+        try:
+            if isinstance(widget, tk.Text):
+                text = widget.get("sel.first", "sel.last")
+            elif isinstance(widget, (tk.Entry, ttk.Entry)):
+                text = widget.selection_get()
+            self.clipboard_clear()
+            self.clipboard_append(text)
+        except tk.TclError: pass
+
+    def perform_paste(self, widget):
+        try:
+            text = self.clipboard_get()
+            widget.insert("insert", text)
+        except tk.TclError: pass
+
+    def perform_cut(self, widget):
+        try:
+            if isinstance(widget, tk.Text):
+                text = widget.get("sel.first", "sel.last")
+                widget.delete("sel.first", "sel.last")
+            elif isinstance(widget, (tk.Entry, ttk.Entry)):
+                text = widget.selection_get()
+                widget.delete("sel.first", "sel.last")
+            self.clipboard_clear()
+            self.clipboard_append(text)
+        except tk.TclError: pass
